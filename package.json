@@ -1,0 +1,16 @@
+{
+  "name": "email-validator",
+  "private": true,
+  "scripts": {
+    "start": "vercel dev",
+    "deploy": "vercel"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.11.1",
+    "hono": "^4.3.4"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5",
+    "vercel": "^34.1.10"
+  }
+}
