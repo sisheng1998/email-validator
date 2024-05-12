@@ -38,7 +38,6 @@ export const testInbox = async (
 ): Promise<TestResult> =>
   new Promise((resolve, reject) => {
     const result: TestResult = { isSMTPConnected: false, isEmailExist: false }
-    const timeoutDuration = 5000 // 5 seconds
 
     const socket = net.createConnection(25, hostname)
     let timeout: NodeJS.Timeout
@@ -53,7 +52,7 @@ export const testInbox = async (
     timeout = setTimeout(() => {
       cleanUp()
       reject(new Error('Connection timeout'))
-    }, timeoutDuration)
+    }, 3000)
 
     socket.on('connect', () => {
       clearTimeout(timeout)
