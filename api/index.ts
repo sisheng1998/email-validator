@@ -48,7 +48,7 @@ app.post('/verify', authMiddleware(), inputMiddleware(), async (c) => {
 
     const [_, domain] = email.split('@')
 
-    result.isDisposable = await isEmailDisposable(domain)
+    result.isDisposable = isEmailDisposable(domain)
 
     const mxRecords = await getMxRecords(domain)
 
