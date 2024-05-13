@@ -1,11 +1,26 @@
 import net from 'node:net'
+import path from 'node:path'
+import { readFile } from 'node:fs/promises'
 import { promises, MxRecord } from 'node:dns'
+import { randomBytes } from 'node:crypto'
 import { emailSchema } from './zod'
 import { SMTPStages, TestResult } from './types'
 import { stages } from './constants'
 
 export const verifyEmailFormat = (email: string): boolean =>
   emailSchema.safeParse(email).success
+
+export const isEmailDisposable = async (domain: string): Promise<boolean> => {
+  const content = await readFile(
+    path.join(process.cwd(), 'api', './disposable_email_list.conf'),
+    {
+      encoding: 'utf-8',
+    }
+  )
+
+  const emailList = content.split('\n').slice(0, -1)
+  return emailList.includes(domain)
+}
 
 export const getMxRecords = async (domain: string): Promise<MxRecord[]> => {
   try {
@@ -96,3 +111,6 @@ export const testInbox = async (
       resolve(result)
     })
   })
+
+export const getNonExistentEmail = (domain: string): string =>
+  `${randomBytes(20).toString('hex')}@${domain}`

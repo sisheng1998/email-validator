@@ -1,11 +1,16 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { handle } from '@hono/node-server/vercel'
-import { randomBytes } from 'node:crypto'
 import { authMiddleware, inputMiddleware } from './middleware'
 import { Data } from './zod'
 import { Result } from './types'
-import { getMxRecords, testInbox, verifyEmailFormat } from './utils'
+import {
+  getMxRecords,
+  getNonExistentEmail,
+  isEmailDisposable,
+  testInbox,
+  verifyEmailFormat,
+} from './utils'
 
 const app = new Hono()
 
@@ -41,9 +46,10 @@ app.post('/verify', authMiddleware(), inputMiddleware(), async (c) => {
 
     result.isEmailValid = true
 
-    // TODO: Check if the email is disposable
-
     const [_, domain] = email.split('@')
+
+    result.isDisposable = await isEmailDisposable(domain)
+
     const mxRecords = await getMxRecords(domain)
 
     if (mxRecords.length === 0) {
@@ -89,13 +95,17 @@ app.post('/verify', authMiddleware(), inputMiddleware(), async (c) => {
     }
 
     try {
+      const nonExistentEmail = getNonExistentEmail(domain)
+
       const { isEmailExist } = await testInbox(
         mxRecords[index].exchange,
-        `${randomBytes(20).toString('hex')}@${domain}`
+        nonExistentEmail
       )
 
       result.isCatchAll = isEmailExist
-    } catch (error) {}
+    } catch (error) {
+      result.isCatchAll = false
+    }
 
     return c.json(
       {
