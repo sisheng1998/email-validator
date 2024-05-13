@@ -1,11 +1,15 @@
 import { Context, MiddlewareHandler } from 'hono'
+import { env } from 'hono/adapter'
+import { ENV } from './types'
 import dataSchema from './zod'
 
 export const authMiddleware =
   (): MiddlewareHandler => async (c: Context, next) => {
+    const { API_TOKEN } = env<ENV>(c)
+
     const token = c.req.header('Authorization')?.split('Bearer ')[1]
 
-    if (!process.env.API_TOKEN || process.env.API_TOKEN.length === 0)
+    if (!API_TOKEN || API_TOKEN.length === 0)
       return c.json(
         {
           success: false,
@@ -14,7 +18,7 @@ export const authMiddleware =
         500
       )
 
-    if (!token || token !== process.env.API_TOKEN)
+    if (!token || token !== API_TOKEN)
       return c.json(
         {
           success: false,

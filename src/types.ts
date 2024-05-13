@@ -1,3 +1,7 @@
+export type ENV = {
+  API_TOKEN: string
+}
+
 export type Result = {
   email: string
   isEmailValid: boolean
