@@ -2,16 +2,16 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { serve } from '@hono/node-server'
 import 'dotenv/config'
-import { authMiddleware, inputMiddleware } from './middleware'
-import { Data } from './zod'
-import { Result } from './types'
+import { authMiddleware, inputMiddleware } from './middleware.js'
+import { Data } from './zod.js'
+import { Result } from './types.js'
 import {
   getMxRecords,
   getNonExistentEmail,
   isEmailDisposable,
   testInbox,
   verifyEmailFormat,
-} from './utils'
+} from './utils.js'
 
 const app = new Hono()
 

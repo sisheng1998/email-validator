@@ -1,4 +1,4 @@
-import { SMTPStage, SMTPStages } from './types'
+import { SMTPStage, SMTPStages } from './types.js'
 
 export const stages: Record<SMTPStages, SMTPStage> = {
   [SMTPStages.CONNECT]: { expected_reply_code: '220' },

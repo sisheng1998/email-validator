@@ -1,10 +1,10 @@
 import net from 'node:net'
 import { promises, MxRecord } from 'node:dns'
 import { randomBytes } from 'node:crypto'
-import { emailSchema } from './zod'
-import { DISPOSABLE_EMAIL_LIST } from './disposableEmailList'
-import { SMTPStages, TestResult } from './types'
-import { stages } from './constants'
+import { emailSchema } from './zod.js'
+import { DISPOSABLE_EMAIL_LIST } from './disposableEmailList.js'
+import { SMTPStages, TestResult } from './types.js'
+import { stages } from './constants.js'
 
 export const verifyEmailFormat = (email: string): boolean =>
   emailSchema.safeParse(email).success

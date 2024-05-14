@@ -1,7 +1,7 @@
 import { Context, MiddlewareHandler } from 'hono'
 import { env } from 'hono/adapter'
-import { ENV } from './types'
-import dataSchema from './zod'
+import { ENV } from './types.js'
+import dataSchema from './zod.js'
 
 export const authMiddleware =
   (): MiddlewareHandler => async (c: Context, next) => {
