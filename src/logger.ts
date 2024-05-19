@@ -1,5 +1,6 @@
+import fs from 'node:fs'
+import path from 'node:path'
 import { MiddlewareHandler } from 'hono/types'
-import { getColorEnabled } from 'hono/utils/color'
 import { getPath } from 'hono/utils/url'
 
 enum LogPrefix {
@@ -26,34 +27,29 @@ const time = (start: number) => {
   ])
 }
 
-const colorStatus = (status: number) => {
-  const colorEnabled = getColorEnabled()
-
-  const output: { [key: string]: string } = {
-    7: colorEnabled ? `\x1b[35m${status}\x1b[0m` : `${status}`,
-    5: colorEnabled ? `\x1b[31m${status}\x1b[0m` : `${status}`,
-    4: colorEnabled ? `\x1b[33m${status}\x1b[0m` : `${status}`,
-    3: colorEnabled ? `\x1b[36m${status}\x1b[0m` : `${status}`,
-    2: colorEnabled ? `\x1b[32m${status}\x1b[0m` : `${status}`,
-    1: colorEnabled ? `\x1b[32m${status}\x1b[0m` : `${status}`,
-    0: colorEnabled ? `\x1b[33m${status}\x1b[0m` : `${status}`,
-  }
-
-  const calculateStatus = (status / 100) | 0
-
-  return output[calculateStatus]
-}
-
 type LogFunction = (message: string, ...messages: string[]) => void
 
-const formatMessage: LogFunction = (message, ...messages) => {
+const logMessage: LogFunction = (message, ...messages) => {
   const timestamp = new Date().toISOString()
 
-  console.log(
-    `[${timestamp}]`,
-    `(${formatDate(timestamp)})`,
-    message.trim(),
-    ...messages.map((m) => m.trim())
+  const logEntry = `[${timestamp}] (${formatDate(
+    timestamp
+  )}) ${message.trim()} ${messages.map((m) => m.trim()).join(' ')}`
+
+  console.log(logEntry)
+
+  const logFolder = path.join(process.cwd(), 'logs')
+
+  if (!fs.existsSync(logFolder)) {
+    fs.mkdirSync(logFolder)
+  }
+
+  const filename = getCurrentDate(timestamp)
+
+  fs.appendFile(
+    path.join(logFolder, `${filename}.log`),
+    logEntry + '\n',
+    (error) => error && console.error('Failed to write log to file:', error)
   )
 }
 
@@ -82,6 +78,16 @@ const formatDate = (timestamp: string) => {
   return `${humanFriendlyDate}, ${humanFriendlyTime}`
 }
 
+const getCurrentDate = (timestamp: string) => {
+  const date = new Date(timestamp)
+
+  const year = date.getFullYear()
+  const month = (date.getMonth() + 1).toString().padStart(2, '0')
+  const day = date.getDate().toString().padStart(2, '0')
+
+  return `${year}-${month}-${day}`
+}
+
 export const logger = (): MiddlewareHandler => async (c, next) => {
   const { method } = c.req
 
@@ -93,7 +99,7 @@ export const logger = (): MiddlewareHandler => async (c, next) => {
 
   await next()
 
-  log.outgoing(method, path, colorStatus(c.res.status), time(start))
+  log.outgoing(method, path, c.res.status.toString(), time(start))
 }
 
 type Log = {
@@ -104,11 +110,11 @@ type Log = {
 }
 
 export const log: Log = {
-  info: (message, ...messages) => formatMessage(message, ...messages),
+  info: (message, ...messages) => logMessage(message, ...messages),
   error: (message, ...messages) =>
-    formatMessage(LogPrefix.Error, message, ...messages),
+    logMessage(LogPrefix.Error, message, ...messages),
   incoming: (message, ...messages) =>
-    formatMessage(LogPrefix.Incoming, message, ...messages),
+    logMessage(LogPrefix.Incoming, message, ...messages),
   outgoing: (message, ...messages) =>
-    formatMessage(LogPrefix.Outgoing, message, ...messages),
+    logMessage(LogPrefix.Outgoing, message, ...messages),
 }
