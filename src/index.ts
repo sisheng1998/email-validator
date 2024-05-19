@@ -7,15 +7,17 @@ import { Data } from './zod.js'
 import { Result } from './types.js'
 import {
   getMxRecords,
-  getNonExistentEmail,
   isEmailDisposable,
   testInbox,
   verifyEmailFormat,
 } from './utils.js'
+import { log, logger } from './logger.js'
 
 const app = new Hono()
 
 app.use('*', cors())
+
+app.use(logger())
 
 app.get('/', (c) => c.redirect('https://sisheng.my', 302))
 
@@ -69,43 +71,28 @@ app.post('/verify', authMiddleware(), inputMiddleware(), async (c) => {
 
     while (index < mxRecords.length) {
       try {
-        const { isEmailExist, isSMTPConnected } = await testInbox(
+        const { isSMTPConnected, isEmailExist, isCatchAll } = await testInbox(
           mxRecords[index].exchange,
           email
         )
 
-        result.isEmailExist = isEmailExist
         result.isSMTPConnected = isSMTPConnected
+        result.isEmailExist = isEmailExist
+        result.isCatchAll = isCatchAll
 
         if (isSMTPConnected) break
 
         index++
       } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : error?.toString() || 'Unknown error occurred'
+
+        log.error(message)
+
         break
       }
-    }
-
-    if (!result.isEmailExist) {
-      return c.json(
-        {
-          success: true,
-          result,
-        },
-        200
-      )
-    }
-
-    try {
-      const nonExistentEmail = getNonExistentEmail(domain)
-
-      const { isEmailExist } = await testInbox(
-        mxRecords[index].exchange,
-        nonExistentEmail
-      )
-
-      result.isCatchAll = isEmailExist
-    } catch (error) {
-      result.isCatchAll = false
     }
 
     return c.json(
@@ -116,10 +103,17 @@ app.post('/verify', authMiddleware(), inputMiddleware(), async (c) => {
       200
     )
   } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : error?.toString() || 'Unknown error occurred'
+
+    log.error(message)
+
     return c.json(
       {
         success: false,
-        message: error instanceof Error ? error.message : error?.toString(),
+        message,
       },
       400
     )
@@ -128,9 +122,13 @@ app.post('/verify', authMiddleware(), inputMiddleware(), async (c) => {
 
 app.notFound((c) => c.json({ success: false, message: 'Not found' }, 404))
 
-app.onError((error, c) =>
-  c.json({ success: false, message: error.message }, 500)
-)
+app.onError((error, c) => {
+  const message = error.message
+
+  log.error(message)
+
+  return c.json({ success: false, message }, 500)
+})
 
 const port = Number(process.env.PORT || 3000)
 
@@ -140,6 +138,6 @@ serve(
     port,
   },
   (info) => {
-    console.log(`Server is running on port ${info.port}`)
+    log.info(`Server is running on port ${info.port}`)
   }
 )

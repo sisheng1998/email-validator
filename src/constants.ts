@@ -1,9 +1,9 @@
 import { SMTPStage, SMTPStages } from './types.js'
 
-export const stages: Record<SMTPStages, SMTPStage> = {
+export const STAGES: Record<SMTPStages, SMTPStage> = {
   [SMTPStages.CONNECT]: { expected_reply_code: '220' },
   [SMTPStages.EHLO]: {
-    command: `EHLO mail.example.org\r\n`,
+    command: `EHLO example.org\r\n`,
     expected_reply_code: '250',
   },
   [SMTPStages.MAIL_FROM]: {
@@ -14,8 +14,14 @@ export const stages: Record<SMTPStages, SMTPStage> = {
     command: (email: string) => `RCPT TO:<${email}>\r\n`,
     expected_reply_code: '250',
   },
+  [SMTPStages.RCPT_TO_CATCH_ALL]: {
+    command: (email: string) => `RCPT TO:<${email}>\r\n`,
+    expected_reply_code: '250',
+  },
   [SMTPStages.QUIT]: {
     command: `QUIT\r\n`,
     expected_reply_code: '221',
   },
 }
+
+export const TIMEOUT_DURATION = 3000

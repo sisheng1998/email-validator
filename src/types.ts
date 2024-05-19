@@ -12,13 +12,17 @@ export type Result = {
   isCatchAll: boolean
 }
 
-export type TestResult = Pick<Result, 'isSMTPConnected' | 'isEmailExist'>
+export type TestResult = Pick<
+  Result,
+  'isSMTPConnected' | 'isEmailExist' | 'isCatchAll'
+>
 
 export enum SMTPStages {
   CONNECT = 'CONNECT',
   EHLO = 'EHLO',
   MAIL_FROM = 'MAIL_FROM',
   RCPT_TO = 'RCPT_TO',
+  RCPT_TO_CATCH_ALL = 'RCPT_TO_CATCH_ALL',
   QUIT = 'QUIT',
 }
 
