@@ -1,6 +1,7 @@
 import net from 'node:net'
 import { promises, MxRecord } from 'node:dns'
 import { randomBytes } from 'node:crypto'
+import psl from 'psl'
 import { emailSchema } from './zod.js'
 import { DISPOSABLE_EMAIL_LIST } from './disposableEmailList.js'
 import { SMTPStages, TestResult } from './types.js'
@@ -30,6 +31,24 @@ const resolveMx = (
 export const getMxRecords = async (domain: string): Promise<MxRecord[]> => {
   try {
     const mxRecords = await resolveMx(domain)
+    return mxRecords.sort((a, b) => a.priority - b.priority)
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : error?.toString() || 'Unknown error occurred'
+
+    log.error(message)
+  }
+
+  const parentDomain = psl.get(domain)
+
+  if (!parentDomain || parentDomain.toLowerCase() === domain.toLowerCase()) {
+    return []
+  }
+
+  try {
+    const mxRecords = await resolveMx(parentDomain)
     return mxRecords.sort((a, b) => a.priority - b.priority)
   } catch (error) {
     const message =
