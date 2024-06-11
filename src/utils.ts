@@ -41,14 +41,15 @@ export const getMxRecords = async (domain: string): Promise<MxRecord[]> => {
     log.error(message)
   }
 
-  const parentDomain = psl.get(domain)
+  // Try to resolve the main domain if the domain is a subdomain
+  const mainDomain = psl.get(domain)
 
-  if (!parentDomain || parentDomain.toLowerCase() === domain.toLowerCase()) {
+  if (!mainDomain || mainDomain.toLowerCase() === domain.toLowerCase()) {
     return []
   }
 
   try {
-    const mxRecords = await resolveMx(parentDomain)
+    const mxRecords = await resolveMx(mainDomain)
     return mxRecords.sort((a, b) => a.priority - b.priority)
   } catch (error) {
     const message =
